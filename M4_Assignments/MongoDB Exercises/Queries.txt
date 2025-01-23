@@ -1,0 +1,109 @@
+1. Find High-Spending Users 
+    Write a query to find users who have spent more than $500 in total across all their orders. 
+
+db.users.aggregate([
+  {
+    $lookup: {
+      from: "orders",
+      localField: "userId",
+      foreignField: "userId",
+      as: "userOrders"
+    }
+  },
+  {
+    $unwind: "$userOrders"
+  },
+  {
+    $group: {
+      _id: "$userId",
+      name: { $first: "$name" },
+      totalSpent: { $sum: "$userOrders.totalAmount" }
+    }
+  },
+  {
+    $match: { totalSpent: { $gt: 500 } }
+  }
+]);
+
+
+2. List Popular Products by Average Rating 
+    Retrieve products that have an average rating greater than or equal to 4. 
+
+db.products.aggregate([
+  {
+    $unwind: "$ratings"
+  },
+  {
+    $group: {
+      _id: "$productId",
+      name: { $first: "$name" },
+      avgRating: { $avg: "$ratings.rating" }
+    }
+  },
+  {
+    $match: { avgRating: { $gte: 4 } }
+  }
+]);
+
+3. Search for Orders in a Specific Time Range 
+    Find all orders placed between "2024-12-01" and "2024-12-31". Ensure the result includes the user name for each order. 
+
+db.orders.aggregate([
+  {
+    $match: {
+      orderDate: {
+        $gte: ISODate("2024-12-01T00:00:00Z"),
+        $lte: ISODate("2024-12-31T23:59:59Z")
+      }
+    }
+  },
+  {
+    $lookup: {
+      from: "users",
+      localField: "userId",
+      foreignField: "userId",
+      as: "userDetails"
+    }
+  },
+  {
+    $unwind: "$userDetails"
+  },
+  {
+    $project: {
+      _id: 0,
+      orderId: 1,
+      orderDate: 1,
+      "userDetails.name": 1,
+      items: 1,
+      totalAmount: 1,
+      status: 1
+    }
+  }
+]);
+
+4. Update Stock After Order Completion 
+    When an order is placed, reduce the stock of each product by the quantity in the order. For example, if 2 units of P001 were purchased, decrement its stock by 2. 
+    Hint: Use $inc with updateOne or updateMany. 
+
+db.orders.find({ orderId: "ORD001" }).forEach(order => {
+  order.items.forEach(item => {
+    db.products.updateOne(
+      { productId: item.productId },
+      { $inc: { stock: -item.quantity } }
+    );
+  });
+});
+
+5. Find Nearest Warehouse 
+
+db.warehouses.aggregate([
+  {
+    $geoNear: {
+      near: { type: "Point", coordinates: [-74.006, 40.7128] },
+      distanceField: "distance",
+      maxDistance: 50000,
+      query: { products: "P001" },
+      spherical: true
+    }
+  }
+]);

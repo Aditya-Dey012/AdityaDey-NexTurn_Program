@@ -1,0 +1,68 @@
+- Creating Tables :
+
+CREATE TABLE Employees (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    hire_date DATE NOT NULL,
+    salary REAL NOT NULL,
+    department_id INTEGER,
+    FOREIGN KEY (department_id) REFERENCES Departments (id)
+);
+
+CREATE TABLE Departments (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+- Inserting Data : 
+
+INSERT INTO Departments (id, name) VALUES
+(1, 'HR'),
+(2, 'Finance'),
+(3, 'Engineering'),
+(4, 'IT');
+
+INSERT INTO Employees (id, name, hire_date, salary, department_id) VALUES
+(1, 'Alice', '2022-05-10', 50000, 1),
+(2, 'Bob', '2020-11-15', 60000, 2),
+(3, 'Charlie', '2021-07-20', 70000, 3),
+(4, 'Diana', '2023-01-10', 80000, 3);
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Q1. Write a query to list the names of employees hired after January 1, 2021
+
+SELECT name 
+FROM Employees 
+WHERE hire_date > '2021-01-01';
+
+
+Q2. Write a query to calculate the average salary of employees in each department. 
+
+SELECT Departments.name AS department_name, 
+       AVG(Employees.salary) AS average_salary
+FROM Employees
+JOIN Departments ON Employees.department_id = Departments.id
+GROUP BY Departments.name;
+
+Q3. Write a query to find the department name where the total salary is the highest.
+
+SELECT Departments.name AS department_name
+FROM Employees
+JOIN Departments ON Employees.department_id = Departments.id
+GROUP BY Departments.name
+ORDER BY SUM(Employees.salary) DESC
+LIMIT 1;
+
+Q4. Write a query to list all departments that currently have no employees assigned. 
+
+SELECT name 
+FROM Departments
+WHERE id NOT IN (SELECT DISTINCT department_id FROM Employees);
+
+Q5. Write a query to fetch all employee details along with their department names.
+
+SELECT Employees.*, Departments.name AS department_name
+FROM Employees
+JOIN Departments ON Employees.department_id = Departments.id;
